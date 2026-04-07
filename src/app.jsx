@@ -1,0 +1,701 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Check, Info, X, AlertTriangle } from "lucide-react";
+
+// ── Design-Token ──────────────────────────────────────────────────────────────
+const BRAND        = "#294f9f";
+const BTN_FIELD_H  = 42;   // Cards höher → mehr Luft
+const BTN_W        = 96;   // feste Breite Leeren/Durchsuchen
+const BTN_ACTION_W = 260;
+const BTN_ACTION_H = 36;
+const CARD_GAP     = 12;
+const SECTION_MT   = 18;
+// Info-I bekommt nur 28px feste Breite im Grid
+const GRID = "3fr 2fr 2fr 16px";
+const LOGO_SRC = "data:image/png;base64,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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/9k=";
+// ─────────────────────────────────────────────────────────────────────────────
+
+function VezzgroupLogo() {
+  return <img src={LOGO_SRC} alt="vezzgroup" style={{ height: 32, width: "auto", display: "block" }} />;
+}
+
+const yearOptions    = ["2026","2025","2024","2023","2022","2021","2020"];
+const quarterOptions = ["Q1","Q2","Q3","Q4"];
+const ytdOptions     = ["1","2","3","4","5","6","7","8","9","10"];
+const workflowLabels = ["Datenquellen","Parameter","Ausgabeordner","Überprüfung","Report erstellen"];
+const TOAST_DURATION      = 6000;
+const TOAST_CIRCUMFERENCE = 2 * Math.PI * 7;
+
+const emptyErrors = () => ({
+  fields: { config: false, matchmaster: false, kennzahlen: false, xmlPrev: false, xmlCurrent: false },
+  cache: false,
+  params: { jahr: false, quartal: false, ytd: false },
+  output: false, confirmed: false,
+});
+
+const StatusDot = ({ active }) => (
+  <span style={{
+    display: "inline-block", width: 13, height: 13, borderRadius: "50%", flexShrink: 0,
+    background: active ? "#059669" : "transparent",
+    border: active ? "none" : "2px solid #cbd5e1",
+  }} />
+);
+
+const InlineHint = ({ id, text, color = "blue" }) => (
+  <div id={id} style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 4, fontSize: 11,
+    color: color === "red" ? "#dc2626" : "#1d4ed8" }}>
+    {color === "red"
+      ? <AlertTriangle style={{ width: 11, height: 11, flexShrink: 0 }} />
+      : <Info style={{ width: 11, height: 11, flexShrink: 0 }} />}
+    <span>{text}</span>
+  </div>
+);
+
+// CardRow verwendet 4-Spalten-Grid: Label | Eingabe | Aktionen | Info(28px)
+const CardRow = ({ children, error }) => (
+  <div style={{
+    display: "grid",
+    gridTemplateColumns: GRID,
+    alignItems: "flex-start",
+    gap: 10,
+    borderRadius: 10,
+    border: `1px solid ${error ? "#fca5a5" : "#e2e8f0"}`,
+    background: error ? "#fef2f2" : "#fff",
+    padding: "14px",
+    boxShadow: "0 1px 3px 0 rgba(0,0,0,.05)",
+    boxSizing: "border-box", width: "100%",
+  }}>
+    {children}
+  </div>
+);
+
+// HelpButton – Popup sticky am ⓘ via useLayoutEffect (nach DOM-Commit)
+function HelpButton({ id, text, openHelp, setOpenHelp }) {
+  const btnRef = React.useRef(null);
+  const [pos, setPos] = React.useState(null);
+  const isOpen = openHelp === id;
+
+  // useLayoutEffect läuft synchron nach DOM-Update → btnRef.current ist garantiert gesetzt
+  React.useLayoutEffect(() => {
+    if (isOpen && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      const popupW = 264;
+      const left = Math.max(8, Math.min(r.right - popupW, window.innerWidth - popupW - 8));
+      setPos({ top: r.bottom + 6, left });
+    } else {
+      setPos(null);
+    }
+  }, [isOpen]);
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setOpenHelp(isOpen ? null : id);
+  };
+
+  return (
+    <div style={{ height: BTN_FIELD_H, display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+      <button type="button" ref={btnRef} onClick={handleClick}
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 2,
+          color: "#94a3b8", borderRadius: 4, display: "flex", lineHeight: 1 }}>
+        <Info style={{ width: 14, height: 14 }} />
+      </button>
+      {isOpen && pos && (
+        <div onClick={e => e.stopPropagation()} style={{
+          position: "fixed", top: pos.top, left: pos.left,
+          zIndex: 99999, width: 264,
+          borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff",
+          padding: "10px 13px", fontSize: 11, lineHeight: 1.65, color: "#475569",
+          boxShadow: "0 6px 20px rgba(0,0,0,.18)",
+        }}>{text}</div>
+      )}
+    </div>
+  );
+}
+
+function ToggleSwitch({ checked, onChange }) {
+  return (
+    <button type="button" onClick={e => { e.stopPropagation(); onChange(!checked); }}
+      style={{
+        width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+        background: checked ? BRAND : "#cbd5e1",
+        position: "relative", transition: "background 200ms", flexShrink: 0, padding: 0,
+      }}>
+      <span style={{
+        position: "absolute", top: 3, left: checked ? 23 : 3,
+        width: 18, height: 18, borderRadius: "50%", background: "#fff",
+        boxShadow: "0 1px 3px rgba(0,0,0,.2)", transition: "left 200ms", display: "block",
+      }} />
+    </button>
+  );
+}
+
+function CustomSelect({ value, onChange, options, hasValue }) {
+  const chevronW = 32;
+  const borderColor = hasValue ? "#a7f3d0" : "#cbd5e1";
+  const sepColor = hasValue ? "#a7f3d0" : "#e2e8f0";
+  return (
+    <div style={{ position: "relative", width: "100%" }}>
+      <select value={value} onChange={onChange}
+        style={{
+          height: BTN_FIELD_H, width: "100%", borderRadius: 8,
+          border: `1px solid ${borderColor}`,
+          background: hasValue ? "#ecfdf5" : "#fff",
+          color: hasValue ? "#065f46" : "#64748b",
+          fontSize: 12, paddingLeft: 10, paddingRight: chevronW + 4,
+          appearance: "none", WebkitAppearance: "none",
+          cursor: "pointer", outline: "none", boxSizing: "border-box",
+        }}
+        onFocus={e => { e.target.style.boxShadow = `0 0 0 2px ${BRAND}40`; }}
+        onBlur={e => { e.target.style.boxShadow = "none"; }}>
+        <option value="" disabled>Auswählen</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+      {/* Trennlinie + Chevron-Bereich – komplette Border-Box */}
+      <div style={{
+        position: "absolute", right: 0, top: 0, bottom: 0,
+        width: chevronW, pointerEvents: "none",
+        borderLeft: `1px solid ${borderColor}`,
+        borderTop: `1px solid ${borderColor}`,
+        borderBottom: `1px solid ${borderColor}`,
+        borderRight: `1px solid ${borderColor}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        borderRadius: "0 8px 8px 0",
+        background: hasValue ? "#d1fae5" : "#f8fafc",
+        margin: 0,
+      }}>
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+          <path d="M3 5L7 9L11 5" stroke={hasValue ? "#059669" : "#94a3b8"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+const btnBase = { width: BTN_ACTION_W, height: BTN_ACTION_H, flexShrink: 0, borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "background 150ms" };
+
+// Moderner Bestätigungs-Toggle für Überprüfung
+function ConfirmToggle({ checked, onChange, error, openHelp, setOpenHelp }) {
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "3fr 2fr 2fr 16px",
+      alignItems: "flex-start", gap: 10,
+      borderRadius: 10, border: `1px solid ${error ? "#fca5a5" : checked ? "#a7f3d0" : "#e2e8f0"}`,
+      background: error ? "#fef2f2" : checked ? "#ecfdf5" : "#fff",
+      padding: "14px", boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+      userSelect: "none", transition: "all 200ms",
+    }}>
+      {/* Col 1: StatusDot + Label – gleiche Höhe wie Toggle-Zeile */}
+      <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 8 }}>
+        <StatusDot active={checked} />
+        <span style={{ fontSize: 13, fontWeight: 500, color: checked ? "#065f46" : "#0f172a" }}>
+          {checked ? "Angaben bestätigt" : "Angaben bestätigen"}
+        </span>
+      </div>
+      {/* Col 2: Toggle + Status + Hint */}
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 10 }}>
+          <ToggleSwitch checked={checked} onChange={v => onChange(v)} />
+          <span style={{ fontSize: 12, color: checked ? "#059669" : "#94a3b8", fontWeight: 500 }}>
+            {checked ? "Bestätigt" : "Ausstehend"}
+          </span>
+        </div>
+        <div style={{ minHeight: 18, marginTop: 2, visibility: error ? "visible" : "hidden" }}>
+          <InlineHint id="hint-confirmed" text="Angaben bestätigen, um fortzufahren." color="red" />
+        </div>
+      </div>
+      {/* Col 3: leer */}
+      <div />
+      {/* Col 4: Info-I */}
+      <HelpButton id="confirm-help"
+        text="Bestätigen Sie mit diesem Schalter, dass Sie alle eingegebenen Daten geprüft haben und die Angaben korrekt sind. Erst nach der Bestätigung kann der Report erstellt werden."
+        openHelp={openHelp} setOpenHelp={setOpenHelp} />
+    </div>
+  );
+}
+
+// ── Hint-Grid (unter Card, Spalte aligned zur Eingabe) ───────────────────────
+const HintRow = ({ col, span, children }) => (
+  <div style={{ display: "grid", gridTemplateColumns: GRID, gap: 10, paddingLeft: 14, paddingRight: 14 }}>
+    <div style={{ gridColumn: `${col} / span ${span}` }}>{children}</div>
+  </div>
+);
+
+export default function App() {
+  const [step, setStep]                   = useState(1);
+  const [toast, setToast]                 = useState(null);
+  const [toastVersion, setToastVersion]   = useState(0);
+  const [toastProgress, setToastProgress] = useState(100);
+  const [openHelp, setOpenHelp]           = useState(null);
+
+  // Globaler Klick schließt alle offenen Popups
+  useEffect(() => {
+    if (!openHelp) return;
+    const close = () => setOpenHelp(null);
+    // setTimeout verhindert dass derselbe Klick der öffnet auch sofort schließt
+    const t = setTimeout(() => window.addEventListener("click", close), 0);
+    return () => { clearTimeout(t); window.removeEventListener("click", close); };
+  }, [openHelp]);
+  const [errorState, setErrors]           = useState(emptyErrors());
+  const [fields, setFields]               = useState({
+    config: { file: "" }, matchmaster: { file: "" }, kennzahlen: { file: "" },
+    xmlPrev: { file: "" }, xmlCurrent: { file: "" },
+  });
+  const [params, setParams]   = useState({ jahr: "", quartal: "", ytd: "" });
+  const [cache, setCache]     = useState(false);
+  const [output, setOutput]   = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [reportProgress, setReportProgress] = useState(0);
+  const [reportStage, setReportStage]       = useState(0);
+
+  useEffect(() => {
+    if (!toast) return;
+    setToastProgress(100);
+    const frame = requestAnimationFrame(() => setToastProgress(0));
+    const timer = setTimeout(() => setToast(null), TOAST_DURATION);
+    return () => { cancelAnimationFrame(frame); clearTimeout(timer); };
+  }, [toast, toastVersion]);
+
+  useEffect(() => {
+    if (step !== 5) { setReportProgress(0); setReportStage(0); return; }
+    setReportProgress(0); setReportStage(0);
+    const stages = [{ p: 25, s: 1 }, { p: 50, s: 2 }, { p: 75, s: 3 }, { p: 100, s: 4 }];
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < stages.length) { setReportProgress(stages[i].p); setReportStage(stages[i].s); i++; }
+      if (i >= stages.length) clearInterval(iv);
+    }, 900);
+    return () => clearInterval(iv);
+  }, [step]);
+
+  const allFilesReady     = useMemo(() => Object.values(fields).every(f => Boolean(f.file)), [fields]);
+  const paramsReady       = useMemo(() => Object.values(params).every(Boolean), [params]);
+  const outputReady       = Boolean(output);
+  const canOpenReportStep = allFilesReady && paramsReady && outputReady && confirmed;
+
+  const isStepComplete = s => {
+    if (s === 1) return allFilesReady;
+    if (s === 2) return paramsReady;
+    if (s === 3) return outputReady;
+    if (s === 4) return confirmed;
+    return step === 5;
+  };
+
+  const showToast = msg => { setToast(msg); setToastVersion(v => v + 1); };
+  const clearStepErrors = s => setErrors(prev => {
+    const next = { ...prev, fields: { ...prev.fields }, params: { ...prev.params } };
+    if (s === 1) { next.fields = { ...emptyErrors().fields }; next.cache = false; }
+    if (s === 2) next.params = { ...emptyErrors().params };
+    if (s === 3) next.output = false;
+    if (s === 4) next.confirmed = false;
+    return next;
+  });
+
+  const setFile   = key => {
+    setFields(p => ({ ...p, [key]: { file: (key === "xmlPrev" || key === "xmlCurrent") ? "demo.xml" : "demo.xlsx" } }));
+    setErrors(p => ({ ...p, fields: { ...p.fields, [key]: false } }));
+  };
+  const clearFile = key => setFields(p => ({ ...p, [key]: { file: "" } }));
+
+  const next = () => {
+    const e = {
+      fields: { config: !fields.config.file, matchmaster: !fields.matchmaster.file, kennzahlen: !fields.kennzahlen.file, xmlPrev: !fields.xmlPrev.file, xmlCurrent: !fields.xmlCurrent.file },
+      params: { jahr: !params.jahr, quartal: !params.quartal, ytd: !params.ytd },
+      output: !output, confirmed: !confirmed,
+    };
+    if (step === 1 && !allFilesReady) {
+      setErrors(p => ({ ...p, fields: e.fields }));
+      showToast("Wählen Sie alle erforderlichen Datenquellen aus."); return;
+    }
+    // cache ist ein Toggle (boolean), hat immer einen definierten Wert – kein Fehlerfall nötig
+    if (step === 2 && !paramsReady) {
+      setErrors(p => ({ ...p, params: e.params }));
+      showToast("Wählen Sie alle erforderlichen Auswertungsparameter aus."); return;
+    }
+    if (step === 3 && !outputReady) {
+      setErrors(p => ({ ...p, output: e.output }));
+      showToast("Wählen Sie einen Ausgabeordner aus."); return;
+    }
+    if (step === 4) {
+      if (!allFilesReady || !paramsReady || !outputReady) {
+        showToast("Vervollständigen Sie zuerst Datenquellen, Parameter und Ausgabeordner."); return;
+      }
+      if (!confirmed) { setErrors(p => ({ ...p, confirmed: e.confirmed })); showToast("Bestätigen Sie, dass alle Angaben korrekt sind."); return; }
+    }
+    clearStepErrors(step);
+    setStep(s => Math.min(5, s + 1));
+  };
+
+  const back = () => { clearStepErrors(step); setStep(s => Math.max(1, s - 1)); };
+
+  const resetFlow = () => {
+    setFields({ config: { file: "" }, matchmaster: { file: "" }, kennzahlen: { file: "" }, xmlPrev: { file: "" }, xmlCurrent: { file: "" } });
+    setParams({ jahr: "", quartal: "", ytd: "" });
+    setCache(false); setOutput(""); setConfirmed(false);
+    setReportProgress(0); setReportStage(0); setErrors(emptyErrors()); setStep(1);
+    showToast("Ein neuer Report kann jetzt erstellt werden.");
+  };
+
+  const downloadReport = () => showToast("Der Report wird heruntergeladen und steht zusätzlich im Ausgabeordner zur Verfügung.");
+
+  // ── Field-Komponente ──────────────────────────────────────────────────────
+  const Field = ({ label, fieldKey, hint }) => {
+    const value    = fields[fieldKey];
+    const hasError = errorState.fields[fieldKey];
+    return (
+      <div style={{ marginBottom: CARD_GAP }}>
+        <CardRow error={hasError}>
+          {/* Col 1: Label – gleiche Höhe wie Drop-Zone (BTN_FIELD_H) */}
+          <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 8 }}>
+            <StatusDot active={Boolean(value.file)} />
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{label}</span>
+          </div>
+          {/* Col 2: Drop-Zone + Hinweis */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{
+              height: BTN_FIELD_H, display: "flex", alignItems: "center",
+              borderRadius: 8, padding: "0 10px", fontSize: 11, cursor: "pointer",
+              border: value.file ? "1px solid #a7f3d0" : "1.5px dashed #94a3b8",
+              background: value.file ? "#ecfdf5" : "#f8fafc",
+              color: value.file ? "#065f46" : "#64748b",
+              boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+            }}>
+              {value.file || "Ablegen oder auswählen"}
+            </div>
+            {/* Hinweis IN der Card – immer reserviert, nur sichtbar bei Fehler */}
+            <div style={{ minHeight: 18, marginTop: 2, visibility: hasError ? "visible" : "hidden" }}>
+              <InlineHint id={`hint-${fieldKey}`} text={`${label} auswählen.`} color="red" />
+            </div>
+          </div>
+          {/* Col 3: Buttons */}
+          <div style={{ display: "flex", gap: 6, height: BTN_FIELD_H }}>
+            <button type="button" onClick={() => clearFile(fieldKey)} style={{
+              width: BTN_W, height: BTN_FIELD_H, borderRadius: 6, border: `1px solid ${BRAND}`,
+              background: "#fff", color: BRAND, fontSize: 12, cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap",
+            }}>Leeren</button>
+            <button type="button" onClick={() => setFile(fieldKey)} style={{
+              width: BTN_W, height: BTN_FIELD_H, borderRadius: 6, border: "none",
+              background: BRAND, color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap",
+            }}>Durchsuchen</button>
+          </div>
+          {/* Col 4: Info */}
+          <HelpButton id={`field-${fieldKey}`} text={hint} openHelp={openHelp} setOpenHelp={setOpenHelp} />
+        </CardRow>
+      </div>
+    );
+  };
+
+  const SectionLabel = ({ children }) => (
+    <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b", marginTop: SECTION_MT, marginBottom: 6 }}>{children}</p>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", minWidth: 1100, background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, boxSizing: "border-box" }}>
+
+      {/* Toast */}
+      {toast && (
+        <div role="alert" style={{ position: "fixed", right: 24, top: 24, zIndex: 30, display: "flex", alignItems: "center", gap: 10, borderRadius: 10, background: "#2563eb", padding: "10px 14px", color: "#fff", boxShadow: "0 4px 16px rgba(0,0,0,.18)", fontSize: 13 }}>
+          <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+            <svg style={{ width: 20, height: 20, transform: "rotate(-90deg)" }} viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="7" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="2" />
+              <circle cx="10" cy="10" r="7" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"
+                strokeDasharray={TOAST_CIRCUMFERENCE} strokeDashoffset={TOAST_CIRCUMFERENCE * (1 - toastProgress / 100)}
+                style={{ transition: `stroke-dashoffset ${TOAST_DURATION}ms linear` }} />
+            </svg>
+          </div>
+          <span>{toast}</span>
+          <button onClick={() => setToast(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.8)", padding: 4, display: "flex" }}><X style={{ width: 15, height: 15 }} /></button>
+        </div>
+      )}
+
+      {/* Haupt-Card */}
+      <div style={{ width: 1160, height: "calc(100vh - 40px)", maxHeight: 900, display: "flex", flexDirection: "column", borderRadius: 18, background: "#fff", boxShadow: "0 4px 32px rgba(0,0,0,.1)", overflow: "hidden", boxSizing: "border-box" }}>
+
+        {/* Header */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", borderBottom: "1px solid #e2e8f0" }}>
+          <div style={{ width: 192, flexShrink: 0, display: "flex", alignItems: "center", padding: "14px 16px", borderRight: "1px solid #e2e8f0" }}>
+            <VezzgroupLogo />
+          </div>
+          <div style={{ padding: "0 24px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", lineHeight: 1.2 }}>Leistungsreport Generator</div>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>vezzgroup GmbH</div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
+
+          {/* Sidebar */}
+          <aside style={{ flexShrink: 0, width: 192, borderRight: "1px solid #e2e8f0", padding: "20px 16px", boxSizing: "border-box" }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>Workflow</div>
+            {workflowLabels.map((label, index) => {
+              const sn       = index + 1;
+              const complete = isStepComplete(sn);
+              const active   = step === sn;
+              const disabled = sn === 5 && !canOpenReportStep;
+              const bubbleBg = complete ? "#059669" : active ? BRAND : "#e2e8f0";
+              return (
+                <div key={label}>
+                  <button type="button" onClick={() => { if (!disabled) setStep(sn); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: "none", border: "none", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1, padding: "2px 0", textAlign: "left" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0, background: bubbleBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {complete
+                        ? <Check style={{ width: 12, height: 12, color: "#fff", strokeWidth: 3 }} />
+                        : <span style={{ fontSize: 11, fontWeight: 700, color: (active || complete) ? "#fff" : "#94a3b8", lineHeight: 1 }}>{sn}</span>}
+                    </div>
+                    <span style={{ fontSize: 13, lineHeight: 1.3, fontWeight: active ? 600 : 400, color: active ? "#0f172a" : complete ? "#334155" : "#94a3b8" }}>{label}</span>
+                  </button>
+                  {index < workflowLabels.length - 1 && (
+                    <div style={{ marginLeft: 10, height: 20, borderLeft: `2px solid ${complete ? "#059669" : "#e2e8f0"}` }} />
+                  )}
+                </div>
+              );
+            })}
+          </aside>
+
+          {/* Main */}
+          <main style={{ flex: 1, minHeight: 0, overflowY: "scroll", overflowX: "hidden", padding: "20px 24px 20px 24px", scrollbarGutter: "stable", boxSizing: "border-box" }}>
+
+            {/* ── Schritt 1: Datenquellen ── */}
+            {step === 1 && (
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>Datenquellen</div>
+
+                <SectionLabel>EasyVET-Daten auswählen</SectionLabel>
+                <Field label="XML Vorjahr" fieldKey="xmlPrev"
+                  hint="Wählen Sie die EasyVET-XML-Exportdatei des Vorjahres aus. Diese Datei enthält die Leistungs- und Behandlungsdaten des vorangegangenen Jahres und wird für Jahresvergleiche sowie Verlaufsauswertungen herangezogen." />
+                <Field label="XML auszuwertendes Jahr" fieldKey="xmlCurrent"
+                  hint="Wählen Sie die EasyVET-XML-Exportdatei des aktuell auszuwertenden Jahres. Diese Datei bildet die primäre Datengrundlage für den Report und enthält alle Behandlungs- und Leistungsdaten des Auswertungszeitraums." />
+
+                <SectionLabel>MatchMaster-Datei auswählen</SectionLabel>
+                <Field label="MatchMaster Datei" fieldKey="matchmaster"
+                  hint="Laden Sie die aktuelle MatchMaster-Datei. Sie enthält die Zuordnungsregeln und Matching-Parameter, die benötigt werden, um Leistungen korrekt den entsprechenden Kategorien und Auswertungsgruppen zuzuordnen." />
+
+                <SectionLabel>Kennzahlen-Datei auswählen</SectionLabel>
+                <Field label="Kennzahlen Datei" fieldKey="kennzahlen"
+                  hint="Laden Sie die Kennzahlen-Datei mit klinikspezifischen Zielwerten, Benchmarks und Vergleichsgrößen. Sie wird benötigt, um Leistungsdaten im Report in Relation zu definierten Kennzahlen darzustellen." />
+
+                <SectionLabel>Konfiguration auswählen</SectionLabel>
+                <Field label="Klinik Konfig" fieldKey="config"
+                  hint="Wählen Sie die Konfigurationsdatei Ihrer Klinik. Sie enthält standortspezifische Einstellungen wie Abteilungsstrukturen, Kostenstellen und individuelle Reportparameter, die für eine korrekte Auswertung erforderlich sind." />
+
+                <SectionLabel>Verarbeitung festlegen</SectionLabel>
+                <div style={{ marginBottom: CARD_GAP }}>
+                  {/* Cache-Card: identische Grid-Struktur wie alle anderen Cards */}
+                  <CardRow error={errorState.cache}>
+                    {/* Col 1: StatusDot + Label – gleiche Höhe wie Toggle-Zeile */}
+                    <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 8 }}>
+                      <StatusDot active={cache} />
+                      <span style={{ fontSize: 13, fontWeight: 500, color: cache ? "#065f46" : "#0f172a" }}>
+                        Gematchte Einträge zwischenspeichern
+                      </span>
+                    </div>
+                    {/* Col 2: Toggle + Status + Hint */}
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 10 }}>
+                        <ToggleSwitch checked={cache} onChange={v => { setCache(v); setErrors(p => ({ ...p, cache: false })); }} />
+                        <span style={{ fontSize: 12, color: cache ? "#059669" : "#94a3b8", fontWeight: 500 }}>
+                          {cache ? "Aktiv" : "Inaktiv"}
+                        </span>
+                      </div>
+                      <div style={{ minHeight: 18, marginTop: 2, visibility: errorState.cache ? "visible" : "hidden" }}>
+                        <InlineHint id="hint-cache" text="Verarbeitungsoption festlegen." />
+                      </div>
+                    </div>
+                    {/* Col 3: leer */}
+                    <div />
+                    {/* Col 4: Info */}
+                    <HelpButton id="cache-help"
+                      text="Aktivieren Sie diese Option, wenn erfolgreich gematchte Einträge für spätere Verarbeitungsschritte zwischengespeichert werden sollen. Das verbessert die Performance bei großen Datensätzen, erhöht jedoch den Speicherbedarf während der Verarbeitung."
+                      openHelp={openHelp} setOpenHelp={setOpenHelp} />
+                  </CardRow>
+                </div>
+              </div>
+            )}
+
+            {/* ── Schritt 2: Parameter ── */}
+            {step === 2 && (
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>Parameter</div>
+                <SectionLabel>Auswertung definieren</SectionLabel>
+                {[
+                  { key: "jahr",    label: "Auszuwertendes Jahr",    options: yearOptions,    hint: "Wählen Sie das Kalenderjahr, für das der Leistungsreport erstellt werden soll. Die Auswahl bestimmt, welche Jahresdaten aus der hochgeladenen EasyVET-XML-Datei für die Auswertung herangezogen werden." },
+                  { key: "quartal", label: "Auswertungsquartal", options: quarterOptions, hint: "Wählen Sie das Quartal innerhalb des ausgewählten Jahres. Der Report wertet die Leistungsdaten des gewählten Quartals detailliert aus und stellt sie den Vergleichswerten des Vorjahres gegenüber." },
+                  { key: "ytd",     label: "YTD (Monate seit Jan.)", options: ytdOptions,     hint: "Geben Sie den Year-to-Date-Wert an (Anzahl der Monate seit Jahresbeginn), bis zu dem die kumulierten Daten ausgewertet werden sollen. Ein Wert von 6 steht für Januar bis Juni." },
+                ].map(({ key, label, options, hint }) => (
+                  <div key={key} style={{ marginBottom: CARD_GAP }}>
+                    <CardRow error={errorState.params[key]}>
+                      <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 8 }}>
+                        <StatusDot active={Boolean(params[key])} />
+                        <span style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{label}</span>
+                      </div>
+                      {/* Col 2: Select + Hint */}
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <CustomSelect value={params[key]}
+                          onChange={e => { setParams(p => ({ ...p, [key]: e.target.value })); setErrors(p => ({ ...p, params: { ...p.params, [key]: false } })); }}
+                          options={options} hasValue={Boolean(params[key])} />
+                        <div style={{ minHeight: 18, marginTop: 2, visibility: errorState.params[key] ? "visible" : "hidden" }}>
+                          <InlineHint id={`hint-param-${key}`}
+                            text={`${key === "jahr" ? "Auszuwertendes Jahr" : key === "quartal" ? "Quartal" : "YTD-Wert"} auswählen.`} color="red" />
+                        </div>
+                      </div>
+                      {/* Col3: leer, Col4: Info */}
+                      <div />
+                      <HelpButton id={`param-${key}`} text={hint} openHelp={openHelp} setOpenHelp={setOpenHelp} />
+                    </CardRow>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Schritt 3: Ausgabeordner ── */}
+            {step === 3 && (
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>Ausgabeordner</div>
+                <SectionLabel>Ausgabeordner festlegen</SectionLabel>
+                <div style={{ marginBottom: CARD_GAP }}>
+                  <CardRow error={errorState.output}>
+                    {/* Col 1: StatusDot + Label – gleiche Höhe wie Input */}
+                    <div style={{ height: BTN_FIELD_H, display: "flex", alignItems: "center", gap: 8 }}>
+                      <StatusDot active={Boolean(output)} />
+                      <span style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>Speicherort des Reports</span>
+                    </div>
+                    {/* Col 2: Input + Hint */}
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <input value={output}
+                        onChange={e => { setOutput(e.target.value); setErrors(p => ({ ...p, output: false })); }}
+                        placeholder="z. B. \\server01\reports\2025_Q4"
+                        style={{ height: BTN_FIELD_H, borderRadius: 8, fontSize: 12,
+                          border: `1px solid ${output ? "#a7f3d0" : errorState.output ? "#fca5a5" : "#cbd5e1"}`,
+                          background: output ? "#ecfdf5" : "#fff",
+                          color: output ? "#065f46" : "#475569",
+                          padding: "0 10px", outline: "none", boxSizing: "border-box", width: "100%" }}
+                        onFocus={e => { e.target.style.boxShadow = `0 0 0 2px ${BRAND}40`; }}
+                        onBlur={e => { e.target.style.boxShadow = "none"; }} />
+                      <div style={{ minHeight: 18, marginTop: 2, visibility: errorState.output ? "visible" : "hidden" }}>
+                        <InlineHint id="hint-output" text="Ausgabeordner auswählen." color="red" />
+                      </div>
+                    </div>
+                    {/* Col 3: Buttons */}
+                    <div style={{ display: "flex", gap: 6, height: BTN_FIELD_H }}>
+                      <button type="button" onClick={() => { setOutput(""); setErrors(p => ({ ...p, output: false })); }}
+                        style={{ width: BTN_W, height: BTN_FIELD_H, borderRadius: 6, border: `1px solid ${BRAND}`,
+                          background: "#fff", color: BRAND, fontSize: 12, cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap" }}>Leeren</button>
+                      <button type="button" onClick={() => { setOutput("\\server01\reports\Q4_2025"); setErrors(p => ({ ...p, output: false })); }}
+                        style={{ width: BTN_W, height: BTN_FIELD_H, borderRadius: 6, border: "none",
+                          background: BRAND, color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap" }}>Durchsuchen</button>
+                    </div>
+                    {/* Col 4: Info */}
+                    <HelpButton id="output-help"
+                      text="Geben Sie den vollständigen Netzwerkpfad oder lokalen Ordnerpfad an, in dem der fertige Report gespeichert wird. Klicken Sie auf ‚Durchsuchen', um den Ordner über den Datei-Dialog auszuwählen. Stellen Sie sicher, dass Sie Schreibberechtigung für den Zielordner besitzen."
+                      openHelp={openHelp} setOpenHelp={setOpenHelp} />
+                  </CardRow>
+                </div>
+              </div>
+            )}
+
+            {/* ── Schritt 4: Überprüfung ── */}
+            {step === 4 && (
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", marginBottom: SECTION_MT }}>Überprüfung</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: CARD_GAP }}>
+                {[
+                  { title: "Datenquellen", rows: [
+                    ["XML Vorjahr", fields.xmlPrev.file], ["XML auszuwertendes Jahr", fields.xmlCurrent.file],
+                    ["MatchMaster Datei", fields.matchmaster.file], ["Kennzahlen Datei", fields.kennzahlen.file],
+                    ["Klinik Konfig", fields.config.file], ["Verarbeitungsoption", cache ? "Aktiv" : "Inaktiv"],
+                  ]},
+                  { title: "Parameter", rows: [["Auszuwertendes Jahr", params.jahr], ["Auswertungsquartal", params.quartal], ["YTD (Monate seit Jan.)", params.ytd]] },
+                  { title: "Ausgabeordner", rows: [["Speicherort des Reports", output]] },
+                ].map(({ title, rows }) => (
+                  <div key={title}>
+                    {/* Kategorie-Label AUSSERHALB der Card */}
+                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748b", marginBottom: 6, marginTop: 0 }}>{title}</p>
+                    <div style={{ borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", padding: "4px 16px", boxShadow: "0 1px 3px rgba(0,0,0,.05)" }}>
+                      {rows.map(([label, value], ri) => (
+                        <div key={label} style={{ display: "grid", gridTemplateColumns: GRID, alignItems: "center", gap: 10, padding: "8px 0", borderBottom: ri < rows.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+                          <span style={{ fontSize: 13, color: "#334155" }}>{label}</span>
+                          <span style={{ gridColumn: "span 2", fontSize: 12, color: "#64748b" }}>{value || "—"}</span>
+                          <div />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <ConfirmToggle checked={confirmed} onChange={v => { setConfirmed(v); setErrors(p => ({ ...p, confirmed: false })); }} error={errorState.confirmed} openHelp={openHelp} setOpenHelp={setOpenHelp} />
+                </div>
+              </div>
+            )}
+
+            {/* ── Schritt 5: Report erstellen ── */}
+            {step === 5 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a" }}>Report erstellen</div>
+                <div style={{ borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", padding: "16px 20px", boxShadow: "0 1px 3px rgba(0,0,0,.05)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>Report wird erstellt</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Die Verarbeitung läuft. Bitte einen Moment warten.</div>
+                    </div>
+                    <div style={{ background: "#f1f5f9", borderRadius: 20, padding: "3px 12px", fontSize: 12, fontWeight: 600, color: "#475569" }}>{reportProgress}%</div>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 8, background: "#e2e8f0", overflow: "hidden", marginBottom: 16 }}>
+                    <div style={{ height: "100%", borderRadius: 8, background: BRAND, width: `${reportProgress}%`, transition: "width 800ms cubic-bezier(0.4,0,0.2,1)" }} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {["Datenquellen werden verarbeitet","Parameter werden verarbeitet","Ausgabeordner wird vorbereitet","Report wird generiert"].map((label, i) => {
+                      const si     = i + 1;
+                      const done   = reportProgress === 100 ? reportStage >= si : reportStage > si;
+                      const active = reportStage === si && reportProgress < 100;
+                      return (
+                        <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 8, border: `1px solid ${done ? "#a7f3d0" : active ? "#bfdbfe" : "#e2e8f0"}`, background: done ? "#ecfdf5" : active ? "#eff6ff" : "#fff", padding: "10px 14px", transition: "all 500ms" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            {done
+                              ? <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Check style={{ width: 11, height: 11, color: "#fff", strokeWidth: 3 }} /></div>
+                              : active
+                                ? <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${BRAND}`, borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} />
+                                : <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid #e2e8f0" }} />}
+                            <span style={{ fontSize: 13, color: done ? "#065f46" : active ? "#0f172a" : "#94a3b8" }}>{label}</span>
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: done ? "#059669" : active ? "#2563eb" : "#94a3b8" }}>{done ? "Abgeschlossen" : active ? "In Bearbeitung" : "Ausstehend"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div style={{ borderRadius: 12, border: `1px solid ${reportProgress === 100 ? "#a7f3d0" : "#e2e8f0"}`, background: reportProgress === 100 ? "#ecfdf5" : "#f8fafc", color: reportProgress === 100 ? "#065f46" : "#94a3b8", padding: "14px 16px", fontSize: 13, transition: "all 400ms" }}>
+                  {reportProgress === 100 ? "Report fertiggestellt. Der Report kann jetzt heruntergeladen werden." : "Die Report-Erstellung wird vorbereitet."}
+                </div>
+              </div>
+            )}
+
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </main>
+        </div>
+
+        {/* Action Bar */}
+        <div style={{ flexShrink: 0, borderTop: "1px solid #e2e8f0", background: "#fff", padding: "10px 40px 10px 24px", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          {step === 5 ? (
+            <>
+              <button onClick={resetFlow} style={{ ...btnBase, border: `1px solid ${BRAND}`, background: "#fff", color: BRAND }}>Neuen Report erstellen</button>
+              <button onClick={downloadReport} style={{ ...btnBase, border: "none", background: BRAND, color: "#fff" }}>Report herunterladen</button>
+            </>
+          ) : (
+            <>
+              <button onClick={back} style={{ ...btnBase, border: `1px solid ${BRAND}`, background: "#fff", color: BRAND, visibility: step === 1 ? "hidden" : "visible" }}>
+                {step === 2 ? "Zurück zu Datenquellen" : step === 3 ? "Zurück zu Parameter" : step === 4 ? "Zurück zu Ausgabeordner" : "Zurück zu Überprüfung"}
+              </button>
+              <button onClick={next} style={{ ...btnBase, border: "none", background: BRAND, color: "#fff" }}>
+                {step === 1 ? "Parameter definieren" : step === 2 ? "Ausgabeordner festlegen" : step === 3 ? "Angaben prüfen" : "Report erstellen"}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ flexShrink: 0, borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px", fontSize: 11, color: "#94a3b8" }}>
+          <span>💜 Made with Love, Coffee and Code by <b style={{ color: "#64748b" }}>App Innovators Solution GmbH</b></span>
+          <span>Release 1.00.00</span>
+        </div>
+      </div>
+    </div>
+  );
+}
